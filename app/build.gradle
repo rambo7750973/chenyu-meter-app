@@ -94,10 +94,6 @@ dependencies {
     // Charts
     implementation 'com.patrykandpatrick.vico:compose-m3:1.12.0'
 
-    // BLE
-    implementation 'androidx.bluetooth:bluetooth:1.0.0-alpha02'
-    implementation 'androidx.bluetooth:bluetooth-ble:1.0.0-alpha02'
-
     // Testing
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'
