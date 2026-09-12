@@ -4,14 +4,12 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Error
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -27,18 +25,13 @@ import java.util.*
 fun BillingScreen(
     viewModel: BillingViewModel = hiltViewModel()
 ) {
-    val uiState by viewModel.uiState.collectAsState(initial = BillingUiState())
+    val uiState by viewModel.uiState.collectAsState()
     val billingRecords by viewModel.billingRecords.collectAsState(initial = emptyList())
-    
+
     Scaffold(
         topBar = {
             TopAppBar(
-                title = {
-                    Text(
-                        text = "账单管理",
-                        fontWeight = FontWeight.Bold
-                    )
-                },
+                title = { Text("账单管理", fontWeight = FontWeight.Bold) },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primary,
                     titleContentColor = MaterialTheme.colorScheme.onPrimary
@@ -51,7 +44,6 @@ fun BillingScreen(
                 .fillMaxSize()
                 .padding(padding)
         ) {
-            // Summary card
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -60,38 +52,26 @@ fun BillingScreen(
                     containerColor = MaterialTheme.colorScheme.primaryContainer
                 )
             ) {
-                Column(
-                    modifier = Modifier.padding(16.dp)
-                ) {
-                    Text(
-                        text = "费用概览",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
-                    )
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text("费用概览", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                     Spacer(modifier = Modifier.height(8.dp))
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Column {
+                            Text("待支付", style = MaterialTheme.typography.bodySmall)
                             Text(
-                                text = "待支付",
-                                style = MaterialTheme.typography.bodySmall
-                            )
-                            Text(
-                                text = "¥${uiState.unpaidAmount}",
+                                "¥${String.format("%.2f", uiState.unpaidAmount)}",
                                 style = MaterialTheme.typography.headlineMedium,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.error
                             )
                         }
                         Column {
+                            Text("已支付", style = MaterialTheme.typography.bodySmall)
                             Text(
-                                text = "已支付",
-                                style = MaterialTheme.typography.bodySmall
-                            )
-                            Text(
-                                text = "¥${uiState.paidAmount}",
+                                "¥${String.format("%.2f", uiState.paidAmount)}",
                                 style = MaterialTheme.typography.headlineMedium,
                                 fontWeight = FontWeight.Bold,
                                 color = MeterGreen
@@ -100,15 +80,14 @@ fun BillingScreen(
                     }
                 }
             }
-            
-            // Billing records
+
             Text(
-                text = "账单记录",
+                "账单记录",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
             )
-            
+
             if (billingRecords.isEmpty()) {
                 Box(
                     modifier = Modifier
@@ -116,22 +95,7 @@ fun BillingScreen(
                         .padding(32.dp),
                     contentAlignment = Alignment.Center
                 ) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Icon(
-                            Icons.Default.Add,
-                            contentDescription = null,
-                            modifier = Modifier.size(64.dp),
-                            tint = MaterialTheme.colorScheme.primary
-                        )
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Text(
-                            text = "暂无账单",
-                            style = MaterialTheme.typography.titleMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
+                    Text("暂无账单记录", color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             } else {
                 LazyColumn(
@@ -148,30 +112,21 @@ fun BillingScreen(
 }
 
 @Composable
-fun BillingRecordCard(
-    record: BillingRecord
-) {
+fun BillingRecordCard(record: BillingRecord) {
     val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
-    
+
     Card(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        ),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp)
-        ) {
+        Column(modifier = Modifier.padding(16.dp)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = when (record.billingType) {
+                    when (record.billingType) {
                         BillingType.TIERED -> "阶梯电价"
                         BillingType.TIME_OF_USE -> "分时电价"
                         BillingType.FIXED -> "固定电价"
@@ -179,59 +134,31 @@ fun BillingRecordCard(
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold
                 )
-                
-                Row(
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
                         if (record.isPaid) Icons.Default.CheckCircle else Icons.Default.Error,
                         contentDescription = null,
                         tint = if (record.isPaid) MeterGreen else OfflineGray,
-                        modifier = Modifier.size(24.dp)
+                        modifier = Modifier.size(20.dp)
                     )
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
-                        text = if (record.isPaid) "已支付" else "待支付",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = if (record.isPaid) MeterGreen else OfflineGray
+                        if (record.isPaid) "已支付" else "待支付",
+                        color = if (record.isPaid) MeterGreen else OfflineGray,
+                        style = MaterialTheme.typography.bodySmall
                     )
                 }
             }
-            
             Spacer(modifier = Modifier.height(8.dp))
-            
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text(
-                    text = "用电量: ${record.energyUsed} kWh",
-                    style = MaterialTheme.typography.bodyMedium
-                )
-                Text(
-                    text = "单价: ¥${record.unitPrice}/kWh",
-                    style = MaterialTheme.typography.bodyMedium
-                )
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                Text("${String.format("%.2f", record.energyUsed)} kWh", style = MaterialTheme.typography.bodyMedium)
+                Text("¥${String.format("%.2f", record.totalCost)}", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
             }
-            
-            Spacer(modifier = Modifier.height(4.dp))
-            
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text(
-                    text = "${dateFormat.format(Date(record.startTime))} - ${dateFormat.format(Date(record.endTime))}",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Text(
-                    text = "¥${record.totalCost}",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary
-                )
-            }
+            Text(
+                "${dateFormat.format(Date(record.startTime))} - ${dateFormat.format(Date(record.endTime))}",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
         }
     }
 }

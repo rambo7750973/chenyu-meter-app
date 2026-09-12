@@ -1,5 +1,6 @@
 package com.meter.app.ui.settings
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -18,17 +19,10 @@ import androidx.hilt.navigation.compose.hiltViewModel
 fun SettingsScreen(
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
-    val uiState by viewModel.uiState.collectAsState()
-    
     Scaffold(
         topBar = {
             TopAppBar(
-                title = {
-                    Text(
-                        text = "设置",
-                        fontWeight = FontWeight.Bold
-                    )
-                },
+                title = { Text("设置", fontWeight = FontWeight.Bold) },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primary,
                     titleContentColor = MaterialTheme.colorScheme.onPrimary
@@ -42,102 +36,31 @@ fun SettingsScreen(
                 .padding(padding)
                 .verticalScroll(rememberScrollState())
         ) {
-            // General settings
-            Text(
-                text = "通用设置",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(16.dp)
-            )
-            
-            SettingsItem(
-                icon = Icons.Default.Person,
-                title = "账户管理",
-                subtitle = "管理您的账户信息",
-                onClick = { /* TODO: Navigate to account */ }
-            )
-            
-            SettingsItem(
-                icon = Icons.Default.Notifications,
-                title = "通知设置",
-                subtitle = "管理应用通知",
-                onClick = { /* TODO: Navigate to notifications */ }
-            )
-            
-            SettingsItem(
-                icon = Icons.Default.Language,
-                title = "语言设置",
-                subtitle = "选择应用语言",
-                onClick = { /* TODO: Navigate to language */ }
-            )
-            
+            Text("通用设置", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, modifier = Modifier.padding(16.dp))
+
+            SettingsItem(Icons.Default.Person, "账户管理", "管理您的账户信息")
+            SettingsItem(Icons.Default.Notifications, "通知设置", "管理应用通知")
+            SettingsItem(Icons.Default.Language, "语言设置", "选择应用语言")
+
             Divider(modifier = Modifier.padding(horizontal = 16.dp))
-            
-            // Meter settings
-            Text(
-                text = "电表设置",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(16.dp)
-            )
-            
-            SettingsItem(
-                icon = Icons.Default.Bolt,
-                title = "电价设置",
-                subtitle = "配置电价类型和价格",
-                onClick = { /* TODO: Navigate to pricing */ }
-            )
-            
-            SettingsItem(
-                icon = Icons.Default.Sync,
-                title = "数据同步",
-                subtitle = "设置数据同步频率",
-                onClick = { /* TODO: Navigate to sync */ }
-            )
-            
-            SettingsItem(
-                icon = Icons.Default.Storage,
-                title = "数据管理",
-                subtitle = "导出或清除数据",
-                onClick = { /* TODO: Navigate to data management */ }
-            )
-            
+
+            Text("电表设置", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, modifier = Modifier.padding(16.dp))
+
+            SettingsItem(Icons.Default.Bolt, "电价设置", "配置电价类型和价格")
+            SettingsItem(Icons.Default.Sync, "数据同步", "设置数据同步频率")
+            SettingsItem(Icons.Default.Storage, "数据管理", "导出或清除数据")
+
             Divider(modifier = Modifier.padding(horizontal = 16.dp))
-            
-            // About
-            Text(
-                text = "关于",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(16.dp)
-            )
-            
-            SettingsItem(
-                icon = Icons.Default.Info,
-                title = "关于应用",
-                subtitle = "版本 1.0.0",
-                onClick = { /* TODO: Show about dialog */ }
-            )
-            
-            SettingsItem(
-                icon = Icons.Default.Help,
-                title = "帮助与反馈",
-                subtitle = "获取帮助或反馈问题",
-                onClick = { /* TODO: Navigate to help */ }
-            )
-            
-            SettingsItem(
-                icon = Icons.Default.Security,
-                title = "隐私政策",
-                subtitle = "查看隐私政策",
-                onClick = { /* TODO: Navigate to privacy */ }
-            )
-            
-            Spacer(modifier = Modifier.height(32.dp))
-            
-            // Logout button
+
+            Text("关于", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, modifier = Modifier.padding(16.dp))
+
+            SettingsItem(Icons.Default.Info, "关于应用", "版本 1.0.0")
+            SettingsItem(Icons.Default.Help, "帮助与反馈", "获取帮助或反馈问题")
+
+            Spacer(modifier = Modifier.height(24.dp))
+
             Button(
-                onClick = { viewModel.logout() },
+                onClick = { },
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(16.dp),
@@ -147,29 +70,18 @@ fun SettingsScreen(
             ) {
                 Text("退出登录")
             }
-            
-            Spacer(modifier = Modifier.height(16.dp))
         }
     }
 }
 
 @Composable
-fun SettingsItem(
-    icon: ImageVector,
-    title: String,
-    subtitle: String,
-    onClick: () -> Unit
-) {
+fun SettingsItem(icon: ImageVector, title: String, subtitle: String) {
     ListItem(
         headlineContent = { Text(title) },
         supportingContent = { Text(subtitle) },
         leadingContent = {
-            Icon(
-                icon,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary
-            )
+            Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
         },
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier.clickable { }
     )
 }

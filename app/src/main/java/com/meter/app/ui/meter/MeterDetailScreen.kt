@@ -5,17 +5,18 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Bluetooth
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Error
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.meter.app.domain.model.MeterReading
+import com.meter.app.ble.ConnectionState
 import com.meter.app.ui.theme.MeterGreen
 import com.meter.app.ui.theme.OfflineGray
 
@@ -26,22 +27,28 @@ fun MeterDetailScreen(
     onBackClick: () -> Unit,
     viewModel: MeterDetailViewModel = hiltViewModel()
 ) {
-    val uiState by viewModel.uiState.collectAsState(initial = MeterDetailUiState())
+    val uiState by viewModel.uiState.collectAsState()
     val meter by viewModel.meter.collectAsState(initial = null)
     val latestReading by viewModel.latestReading.collectAsState(initial = null)
-    
+    val connectionState by viewModel.connectionState.collectAsState()
+    val receivedData by viewModel.receivedData.collectAsState()
+
+    val isConnected = connectionState is ConnectionState.Connected
+
     Scaffold(
         topBar = {
             TopAppBar(
-                title = {
-                    Text(
-                        text = meter?.name ?: "电表详情",
-                        fontWeight = FontWeight.Bold
-                    )
-                },
+                title = { Text(meter?.name ?: "电表详情") },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "返回")
+                    }
+                },
+                actions = {
+                    if (isConnected) {
+                        IconButton(onClick = { viewModel.refreshData() }) {
+                            Icon(Icons.Default.Refresh, contentDescription = "刷新")
+                        }
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -56,16 +63,15 @@ fun MeterDetailScreen(
                 .fillMaxSize()
                 .padding(padding)
                 .verticalScroll(rememberScrollState())
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // Status card
+            // Connection status
             Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
                 colors = CardDefaults.cardColors(
-                    containerColor = if (meter?.isOnline == true) 
-                        MaterialTheme.colorScheme.primaryContainer 
-                    else 
+                    containerColor = if (isConnected)
+                        MaterialTheme.colorScheme.primaryContainer
+                    else
                         MaterialTheme.colorScheme.errorContainer
                 )
             ) {
@@ -76,108 +82,96 @@ fun MeterDetailScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Icon(
-                        if (meter?.isOnline == true) Icons.Default.CheckCircle else Icons.Default.Error,
+                        if (isConnected) Icons.Default.CheckCircle else Icons.Default.Error,
                         contentDescription = null,
-                        tint = if (meter?.isOnline == true) MeterGreen else OfflineGray,
-                        modifier = Modifier.size(48.dp)
+                        tint = if (isConnected) MeterGreen else OfflineGray,
+                        modifier = Modifier.size(40.dp)
                     )
                     Spacer(modifier = Modifier.width(16.dp))
-                    Column {
+                    Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = if (meter?.isOnline == true) "在线" else "离线",
+                            text = when (connectionState) {
+                                is ConnectionState.Connected -> "已连接"
+                                is ConnectionState.Connecting -> "连接中..."
+                                is ConnectionState.Disconnected -> "未连接"
+                                is ConnectionState.Error -> "连接错误"
+                            },
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold
                         )
                         Text(
-                            text = "MAC: ${meter?.macAddress ?: "未知"}",
-                            style = MaterialTheme.typography.bodyMedium
+                            text = meter?.macAddress ?: meter?.address ?: "",
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    }
+                    if (!isConnected) {
+                        Button(
+                            onClick = { viewModel.refreshData() }
+                        ) {
+                            Icon(Icons.Default.Bluetooth, contentDescription = null, modifier = Modifier.size(18.dp))
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text("连接")
+                        }
+                    } else {
+                        OutlinedButton(onClick = { viewModel.disconnect() }) {
+                            Text("断开")
+                        }
+                    }
+                }
+            }
+
+            // Real-time data
+            Card {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text("实时数据", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceEvenly
+                    ) {
+                        DataItem("功率", "${latestReading?.currentPower ?: 0f}", "W")
+                        DataItem("电压", "${latestReading?.voltage ?: 0f}", "V")
+                        DataItem("电流", "${latestReading?.current ?: 0f}", "A")
+                    }
+                }
+            }
+
+            // Energy stats
+            Card {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text("用电统计", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceEvenly
+                    ) {
+                        DataItem("今日", "${latestReading?.dailyEnergy ?: 0f}", "kWh")
+                        DataItem("本月", "${latestReading?.monthlyEnergy ?: 0f}", "kWh")
+                        DataItem("总计", "${latestReading?.totalEnergy ?: 0f}", "kWh")
+                    }
+                }
+            }
+
+            // Raw data for debugging
+            if (receivedData != null) {
+                Card(
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant
+                    )
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Text("原始数据 (调试)", style = MaterialTheme.typography.titleSmall)
+                        Text(
+                            text = receivedData!!.joinToString(" ") { "%02X".format(it) },
+                            style = MaterialTheme.typography.bodySmall
                         )
                     }
                 }
             }
-            
-            // Real-time data card
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp)
-            ) {
-                Column(
-                    modifier = Modifier.padding(16.dp)
-                ) {
-                    Text(
-                        text = "实时数据",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Spacer(modifier = Modifier.height(16.dp))
-                    
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        DataItem("功率", "${latestReading?.currentPower ?: 0f} W")
-                        DataItem("电压", "${latestReading?.voltage ?: 0f} V")
-                        DataItem("电流", "${latestReading?.current ?: 0f} A")
-                    }
-                }
-            }
-            
-            // Energy consumption card
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp)
-            ) {
-                Column(
-                    modifier = Modifier.padding(16.dp)
-                ) {
-                    Text(
-                        text = "用电统计",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Spacer(modifier = Modifier.height(16.dp))
-                    
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        DataItem("今日", "${latestReading?.dailyEnergy ?: 0f} kWh")
-                        DataItem("本月", "${latestReading?.monthlyEnergy ?: 0f} kWh")
-                        DataItem("总计", "${latestReading?.totalEnergy ?: 0f} kWh")
-                    }
-                }
-            }
-            
-            // Actions
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                Button(
-                    onClick = { viewModel.refreshData() },
-                    modifier = Modifier.weight(1f)
-                ) {
-                    Text("刷新数据")
-                }
-                
-                OutlinedButton(
-                    onClick = { viewModel.disconnect() },
-                    modifier = Modifier.weight(1f)
-                ) {
-                    Text("断开连接")
-                }
-            }
-            
-            // Error message
+
+            // Error
             uiState.error?.let { error ->
                 Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
                     colors = CardDefaults.cardColors(
                         containerColor = MaterialTheme.colorScheme.errorContainer
                     )
@@ -194,23 +188,15 @@ fun MeterDetailScreen(
 }
 
 @Composable
-fun DataItem(
-    label: String,
-    value: String
-) {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
+fun DataItem(label: String, value: String, unit: String) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(label, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         Text(
             text = value,
-            style = MaterialTheme.typography.titleMedium,
+            style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.primary
         )
+        Text(unit, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }

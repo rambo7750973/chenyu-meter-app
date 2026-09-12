@@ -3,7 +3,7 @@ package com.meter.app.data.repository
 import com.meter.app.data.local.MeterDao
 import com.meter.app.domain.model.*
 import kotlinx.coroutines.flow.Flow
-import java.util.UUID
+import java.util.*
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -11,12 +11,11 @@ import javax.inject.Singleton
 class MeterRepository @Inject constructor(
     private val meterDao: MeterDao
 ) {
-    
-    // Meter operations
+
     fun getAllMeters(): Flow<List<Meter>> = meterDao.getAllMeters()
-    
+
     fun getMeterById(meterId: String): Flow<Meter?> = meterDao.getMeterById(meterId)
-    
+
     suspend fun createMeter(
         name: String,
         address: String,
@@ -38,24 +37,23 @@ class MeterRepository @Inject constructor(
         meterDao.insertMeter(meter)
         return meter
     }
-    
+
     suspend fun updateMeter(meter: Meter) = meterDao.updateMeter(meter)
-    
+
     suspend fun deleteMeter(meter: Meter) = meterDao.deleteMeter(meter)
-    
+
     suspend fun updateMeterStatus(meterId: String, isOnline: Boolean) {
         meterDao.updateMeterStatus(meterId, isOnline, System.currentTimeMillis())
     }
-    
-    // Reading operations
+
     fun getMeterReadings(meterId: String, limit: Int = 100): Flow<List<MeterReading>> {
         return meterDao.getMeterReadings(meterId, limit)
     }
-    
+
     fun getMeterReadingsByTimeRange(meterId: String, startTime: Long, endTime: Long): Flow<List<MeterReading>> {
         return meterDao.getMeterReadingsByTimeRange(meterId, startTime, endTime)
     }
-    
+
     suspend fun recordMeterReading(
         meterId: String,
         currentPower: Float,
@@ -79,31 +77,30 @@ class MeterRepository @Inject constructor(
         meterDao.insertMeterReading(reading)
         return reading
     }
-    
+
     fun getLatestReading(meterId: String): Flow<MeterReading?> {
         return meterDao.getLatestReading(meterId)
     }
-    
+
     suspend fun getTodayEnergy(meterId: String): Float {
         val startOfDay = getStartOfDay()
         return meterDao.getTodayEnergy(meterId, startOfDay) ?: 0f
     }
-    
+
     suspend fun getMonthEnergy(meterId: String): Float {
         val startOfMonth = getStartOfMonth()
         return meterDao.getMonthEnergy(meterId, startOfMonth) ?: 0f
     }
-    
+
     suspend fun getYearEnergy(meterId: String): Float {
         val startOfYear = getStartOfYear()
         return meterDao.getYearEnergy(meterId, startOfYear) ?: 0f
     }
-    
-    // Billing operations
+
     fun getBillingRecords(meterId: String): Flow<List<BillingRecord>> {
         return meterDao.getBillingRecords(meterId)
     }
-    
+
     suspend fun createBillingRecord(
         meterId: String,
         startTime: Long,
@@ -127,83 +124,48 @@ class MeterRepository @Inject constructor(
         meterDao.insertBillingRecord(record)
         return record
     }
-    
+
     suspend fun updateBillingRecord(record: BillingRecord) = meterDao.updateBillingRecord(record)
-    
+
     suspend fun markAsPaid(recordId: String) {
-        // Simplified approach - find and update directly
-        // In real app, you'd want a better query
-        val allRecords = meterDao.getBillingRecords("")
-        // This is a Flow, so we need to handle it differently
-        // For now, just update the record directly
+        meterDao.markRecordAsPaid(recordId, System.currentTimeMillis())
     }
-    
+
     suspend fun getUnpaidAmount(meterId: String): Float {
         return meterDao.getUnpaidAmount(meterId) ?: 0f
     }
-    
+
     suspend fun getPaidAmount(meterId: String): Float {
         return meterDao.getPaidAmount(meterId) ?: 0f
     }
-    
-    // Statistics
-    suspend fun getMeterStats(meterId: String): MeterStats {
-        val todayEnergy = getTodayEnergy(meterId)
-        val monthEnergy = getMonthEnergy(meterId)
-        val yearEnergy = getYearEnergy(meterId)
-        
-        // Calculate costs (simplified - in real app, use pricing model)
-        val todayCost = todayEnergy * 0.5f // Example price
-        val monthCost = monthEnergy * 0.5f
-        val yearCost = yearEnergy * 0.5f
-        
-        val averageDaily = if (yearEnergy > 0) {
-            val daysInYear = 365
-            yearEnergy / daysInYear
-        } else {
-            0f
-        }
-        
-        return MeterStats(
-            meterId = meterId,
-            todayEnergy = todayEnergy,
-            monthEnergy = monthEnergy,
-            yearEnergy = yearEnergy,
-            todayCost = todayCost,
-            monthCost = monthCost,
-            yearCost = yearCost,
-            averageDaily = averageDaily
-        )
-    }
-    
-    // Helper functions for time calculations
+
     private fun getStartOfDay(): Long {
-        val calendar = java.util.Calendar.getInstance()
-        calendar.set(java.util.Calendar.HOUR_OF_DAY, 0)
-        calendar.set(java.util.Calendar.MINUTE, 0)
-        calendar.set(java.util.Calendar.SECOND, 0)
-        calendar.set(java.util.Calendar.MILLISECOND, 0)
+        val calendar = Calendar.getInstance()
+        calendar.set(Calendar.HOUR_OF_DAY, 0)
+        calendar.set(Calendar.MINUTE, 0)
+        calendar.set(Calendar.SECOND, 0)
+        calendar.set(Calendar.MILLISECOND, 0)
         return calendar.timeInMillis
     }
-    
+
     private fun getStartOfMonth(): Long {
-        val calendar = java.util.Calendar.getInstance()
-        calendar.set(java.util.Calendar.DAY_OF_MONTH, 1)
-        calendar.set(java.util.Calendar.HOUR_OF_DAY, 0)
-        calendar.set(java.util.Calendar.MINUTE, 0)
-        calendar.set(java.util.Calendar.SECOND, 0)
-        calendar.set(java.util.Calendar.MILLISECOND, 0)
+        val calendar = Calendar.getInstance()
+        calendar.set(Calendar.DAY_OF_MONTH, 1)
+        calendar.set(Calendar.HOUR_OF_DAY, 0)
+        calendar.set(Calendar.MINUTE, 0)
+        calendar.set(Calendar.SECOND, 0)
+        calendar.set(Calendar.MILLISECOND, 0)
         return calendar.timeInMillis
     }
-    
+
     private fun getStartOfYear(): Long {
-        val calendar = java.util.Calendar.getInstance()
-        calendar.set(java.util.Calendar.MONTH, java.util.Calendar.JANUARY)
-        calendar.set(java.util.Calendar.DAY_OF_MONTH, 1)
-        calendar.set(java.util.Calendar.HOUR_OF_DAY, 0)
-        calendar.set(java.util.Calendar.MINUTE, 0)
-        calendar.set(java.util.Calendar.SECOND, 0)
-        calendar.set(java.util.Calendar.MILLISECOND, 0)
+        val calendar = Calendar.getInstance()
+        calendar.set(Calendar.MONTH, Calendar.JANUARY)
+        calendar.set(Calendar.DAY_OF_MONTH, 1)
+        calendar.set(Calendar.HOUR_OF_DAY, 0)
+        calendar.set(Calendar.MINUTE, 0)
+        calendar.set(Calendar.SECOND, 0)
+        calendar.set(Calendar.MILLISECOND, 0)
         return calendar.timeInMillis
     }
 }

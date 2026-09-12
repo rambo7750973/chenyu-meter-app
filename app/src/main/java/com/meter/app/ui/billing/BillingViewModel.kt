@@ -3,7 +3,6 @@ package com.meter.app.ui.billing
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.meter.app.data.repository.MeterRepository
-import com.meter.app.domain.model.BillingRecord
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -15,40 +14,30 @@ import javax.inject.Inject
 class BillingViewModel @Inject constructor(
     private val repository: MeterRepository
 ) : ViewModel() {
-    
+
     private val _uiState = MutableStateFlow(BillingUiState())
     val uiState: StateFlow<BillingUiState> = _uiState.asStateFlow()
-    
-    val billingRecords = repository.getBillingRecords("") // TODO: Get meterId
-    
+
+    val billingRecords = repository.getBillingRecords("")
+
     init {
         loadBillingData()
     }
-    
+
     private fun loadBillingData() {
         viewModelScope.launch {
             try {
-                _uiState.value = _uiState.value.copy(isLoading = true)
-                
-                val unpaidAmount = repository.getUnpaidAmount("")
-                val paidAmount = repository.getPaidAmount("")
-                
+                val unpaid = repository.getUnpaidAmount("")
+                val paid = repository.getPaidAmount("")
                 _uiState.value = _uiState.value.copy(
-                    unpaidAmount = unpaidAmount,
-                    paidAmount = paidAmount,
+                    unpaidAmount = unpaid,
+                    paidAmount = paid,
                     isLoading = false
                 )
             } catch (e: Exception) {
-                _uiState.value = _uiState.value.copy(
-                    error = e.message,
-                    isLoading = false
-                )
+                _uiState.value = _uiState.value.copy(isLoading = false)
             }
         }
-    }
-    
-    fun refreshData() {
-        loadBillingData()
     }
 }
 

@@ -1,10 +1,12 @@
 package com.meter.app.ui.home
 
-import androidx.lifecycle.ViewModel
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.meter.app.ble.BleDevice
+import com.meter.app.ble.BleManager
+import com.meter.app.ble.ScanState
 import com.meter.app.data.repository.MeterRepository
-import com.meter.app.domain.model.Meter
-import com.meter.app.domain.model.MeterStats
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -14,56 +16,59 @@ import javax.inject.Inject
 
 @HiltViewModel
 class HomeViewModel @Inject constructor(
-    private val repository: MeterRepository
-) : ViewModel() {
-    
+    application: Application,
+    private val repository: MeterRepository,
+    private val bleManager: BleManager
+) : AndroidViewModel(application) {
+
     private val _uiState = MutableStateFlow(HomeUiState())
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
-    
+
     val meters = repository.getAllMeters()
-    
-    private var isScanning = false
-    
+    val scanState = bleManager.scanState
+    val discoveredDevices = bleManager.discoveredDevices
+
     init {
         loadStats()
     }
-    
+
     private fun loadStats() {
         viewModelScope.launch {
             try {
-                // Load today's energy
-                val todayEnergy = repository.getMeterStats("").todayEnergy
-                val monthEnergy = repository.getMeterStats("").monthEnergy
-                
+                val today = repository.getTodayEnergy("")
+                val month = repository.getMonthEnergy("")
                 _uiState.value = _uiState.value.copy(
-                    todayEnergy = todayEnergy,
-                    monthEnergy = monthEnergy,
+                    todayEnergy = today,
+                    monthEnergy = month,
                     isLoading = false
                 )
             } catch (e: Exception) {
-                _uiState.value = _uiState.value.copy(
-                    error = e.message,
-                    isLoading = false
-                )
+                _uiState.value = _uiState.value.copy(isLoading = false)
             }
         }
     }
-    
+
     fun startScan() {
-        if (isScanning) return
-        
-        isScanning = true
-        _uiState.value = _uiState.value.copy(isScanning = true)
-        
-        // TODO: Implement BLE scanning
-        // For now, just simulate scanning
+        bleManager.startScan()
+    }
+
+    fun stopScan() {
+        bleManager.stopScan()
+    }
+
+    fun connectDevice(device: BleDevice) {
         viewModelScope.launch {
-            kotlinx.coroutines.delay(2000)
-            isScanning = false
-            _uiState.value = _uiState.value.copy(isScanning = false)
+            // Create meter entry
+            repository.createMeter(
+                name = device.name,
+                address = device.address,
+                macAddress = device.address
+            )
+            // Connect via BLE
+            bleManager.connectToDevice(device)
         }
     }
-    
+
     fun refreshStats() {
         loadStats()
     }
@@ -73,6 +78,5 @@ data class HomeUiState(
     val todayEnergy: Float = 0f,
     val monthEnergy: Float = 0f,
     val isLoading: Boolean = true,
-    val isScanning: Boolean = false,
     val error: String? = null
 )
