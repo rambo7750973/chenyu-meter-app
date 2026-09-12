@@ -27,8 +27,8 @@ import java.util.*
 fun BillingScreen(
     viewModel: BillingViewModel = hiltViewModel()
 ) {
-    val uiState by viewModel.uiState.collectAsState()
-    val billingRecords by viewModel.billingRecords.collectAsState()
+    val uiState by viewModel.uiState.collectAsState(initial = BillingUiState())
+    val billingRecords by viewModel.billingRecords.collectAsState(initial = emptyList())
     
     Scaffold(
         topBar = {

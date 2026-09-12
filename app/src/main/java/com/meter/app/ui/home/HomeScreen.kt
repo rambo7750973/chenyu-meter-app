@@ -27,8 +27,8 @@ fun HomeScreen(
     onMeterClick: (String) -> Unit,
     viewModel: HomeViewModel = hiltViewModel()
 ) {
-    val uiState by viewModel.uiState.collectAsState()
-    val meters by viewModel.meters.collectAsState()
+    val uiState by viewModel.uiState.collectAsState(initial = HomeUiState())
+    val meters by viewModel.meters.collectAsState(initial = emptyList())
     
     Scaffold(
         topBar = {

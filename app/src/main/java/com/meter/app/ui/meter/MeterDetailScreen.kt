@@ -26,9 +26,9 @@ fun MeterDetailScreen(
     onBackClick: () -> Unit,
     viewModel: MeterDetailViewModel = hiltViewModel()
 ) {
-    val uiState by viewModel.uiState.collectAsState()
-    val meter by viewModel.meter.collectAsState()
-    val latestReading by viewModel.latestReading.collectAsState()
+    val uiState by viewModel.uiState.collectAsState(initial = MeterDetailUiState())
+    val meter by viewModel.meter.collectAsState(initial = null)
+    val latestReading by viewModel.latestReading.collectAsState(initial = null)
     
     Scaffold(
         topBar = {

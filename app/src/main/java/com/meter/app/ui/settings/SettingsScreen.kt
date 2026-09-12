@@ -71,7 +71,7 @@ fun SettingsScreen(
                 onClick = { /* TODO: Navigate to language */ }
             )
             
-            HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
+            Divider(modifier = Modifier.padding(horizontal = 16.dp))
             
             // Meter settings
             Text(
@@ -102,7 +102,7 @@ fun SettingsScreen(
                 onClick = { /* TODO: Navigate to data management */ }
             )
             
-            HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
+            Divider(modifier = Modifier.padding(horizontal = 16.dp))
             
             // About
             Text(

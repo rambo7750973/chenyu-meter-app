@@ -51,9 +51,9 @@ class BleManager @Inject constructor(
     val receivedData: StateFlow<ByteArray?> = _receivedData.asStateFlow()
     
     private val scanCallback = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-        object : android.bluetooth.leather.ScanCallback() {
+        object : android.bluetooth.le.ScanCallback() {
             @SuppressLint("MissingPermission")
-            override fun onScanResult(callbackType: Int, result: android.bluetooth.leather.ScanResult) {
+            override fun onScanResult(callbackType: Int, result: android.bluetooth.le.ScanResult) {
                 val device = result.device
                 val deviceName = device.name ?: "Unknown"
                 val deviceAddress = device.address
@@ -106,13 +106,13 @@ class BleManager @Inject constructor(
         
         // Start scan with filter for Chenyu meters
         val filters = listOf(
-            android.bluetooth.leather.ScanFilter.Builder()
+            android.bluetooth.le.ScanFilter.Builder()
                 .setDeviceName("Chenyu") // Customize this
                 .build()
         )
         
-        val settings = android.bluetooth.leather.ScanSettings.Builder()
-            .setScanMode(android.bluetooth.leather.ScanSettings.SCAN_MODE_LOW_LATENCY)
+        val settings = android.bluetooth.le.ScanSettings.Builder()
+            .setScanMode(android.bluetooth.le.ScanSettings.SCAN_MODE_LOW_LATENCY)
             .build()
         
         bluetoothLeScanner.startScan(filters, settings, scanCallback)
