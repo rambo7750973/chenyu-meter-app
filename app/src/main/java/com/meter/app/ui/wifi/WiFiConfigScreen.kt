@@ -102,14 +102,14 @@ fun WiFiConfigScreen(
                         )
                         Spacer(modifier = Modifier.width(12.dp))
                         Text(
-                            when (configState) {
+                            when (val state = configState) {
                                 is WiFiConfigState.Idle -> "选择WiFi网络并输入密码"
                                 is WiFiConfigState.Scanning -> "正在扫描网络..."
                                 is WiFiConfigState.ScanComplete -> "扫描完成，共发现 ${networks.size} 个网络"
                                 is WiFiConfigState.Configuring -> "正在发送配置..."
                                 is WiFiConfigState.ConfigSent -> "配置已发送，等待设备连接"
-                                is WiFiConfigState.Success -> configState.message
-                                is WiFiConfigState.Error -> configState.message
+                                is WiFiConfigState.Success -> state.message
+                                is WiFiConfigState.Error -> state.message
                             },
                             style = MaterialTheme.typography.bodyLarge
                         )
