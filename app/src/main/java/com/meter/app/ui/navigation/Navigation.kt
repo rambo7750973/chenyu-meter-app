@@ -23,6 +23,7 @@ import com.meter.app.ui.billing.BillingScreen
 import com.meter.app.ui.home.HomeScreen
 import com.meter.app.ui.meter.MeterDetailScreen
 import com.meter.app.ui.settings.SettingsScreen
+import com.meter.app.ui.wifi.WiFiConfigScreen
 
 sealed class Screen(val route: String, val title: String, val icon: ImageVector) {
     object Home : Screen("home", "首页", Icons.Default.Home)
@@ -90,6 +91,20 @@ fun MeterNavigation() {
             ) { backStackEntry ->
                 val meterId = backStackEntry.arguments?.getString("meterId") ?: ""
                 MeterDetailScreen(
+                    meterId = meterId,
+                    onBackClick = { navController.popBackStack() },
+                    onWiFiConfig = { id ->
+                        navController.navigate("wifi/$id")
+                    }
+                )
+            }
+
+            composable(
+                route = "wifi/{meterId}",
+                arguments = listOf(navArgument("meterId") { type = NavType.StringType })
+            ) { backStackEntry ->
+                val meterId = backStackEntry.arguments?.getString("meterId") ?: ""
+                WiFiConfigScreen(
                     meterId = meterId,
                     onBackClick = { navController.popBackStack() }
                 )

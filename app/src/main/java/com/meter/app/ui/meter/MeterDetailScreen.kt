@@ -5,10 +5,10 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Bluetooth
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Wifi
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -25,6 +25,7 @@ import com.meter.app.ui.theme.OfflineGray
 fun MeterDetailScreen(
     meterId: String,
     onBackClick: () -> Unit,
+    onWiFiConfig: (String) -> Unit = {},
     viewModel: MeterDetailViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -46,6 +47,9 @@ fun MeterDetailScreen(
                 },
                 actions = {
                     if (isConnected) {
+                        IconButton(onClick = { onWiFiConfig(meterId) }) {
+                            Icon(Icons.Default.Wifi, contentDescription = "WiFi配网")
+                        }
                         IconButton(onClick = { viewModel.refreshData() }) {
                             Icon(Icons.Default.Refresh, contentDescription = "刷新")
                         }
@@ -104,19 +108,18 @@ fun MeterDetailScreen(
                             style = MaterialTheme.typography.bodySmall
                         )
                     }
-                    if (!isConnected) {
-                        Button(
-                            onClick = { viewModel.refreshData() }
-                        ) {
-                            Icon(Icons.Default.Bluetooth, contentDescription = null, modifier = Modifier.size(18.dp))
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text("连接")
-                        }
-                    } else {
-                        OutlinedButton(onClick = { viewModel.disconnect() }) {
-                            Text("断开")
-                        }
-                    }
+                }
+            }
+
+            // WiFi config button
+            if (isConnected) {
+                Button(
+                    onClick = { onWiFiConfig(meterId) },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Icon(Icons.Default.Wifi, contentDescription = null)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("WiFi配网设置")
                 }
             }
 
@@ -166,21 +169,6 @@ fun MeterDetailScreen(
                             style = MaterialTheme.typography.bodySmall
                         )
                     }
-                }
-            }
-
-            // Error
-            uiState.error?.let { error ->
-                Card(
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.errorContainer
-                    )
-                ) {
-                    Text(
-                        text = error,
-                        modifier = Modifier.padding(16.dp),
-                        color = MaterialTheme.colorScheme.onErrorContainer
-                    )
                 }
             }
         }

@@ -5,6 +5,7 @@ import androidx.room.Room
 import com.meter.app.data.local.MeterDao
 import com.meter.app.data.local.MeterDatabase
 import com.meter.app.ble.BleManager
+import com.meter.app.ble.WiFiConfigManager
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -15,13 +16,13 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 object AppModule {
-    
+
     @Provides
     @Singleton
     fun provideContext(@ApplicationContext context: Context): Context {
         return context
     }
-    
+
     @Provides
     @Singleton
     fun provideMeterDatabase(@ApplicationContext context: Context): MeterDatabase {
@@ -33,16 +34,22 @@ object AppModule {
         .fallbackToDestructiveMigration()
         .build()
     }
-    
+
     @Provides
     @Singleton
     fun provideMeterDao(database: MeterDatabase): MeterDao {
         return database.meterDao()
     }
-    
+
     @Provides
     @Singleton
     fun provideBleManager(@ApplicationContext context: Context): BleManager {
         return BleManager(context)
+    }
+
+    @Provides
+    @Singleton
+    fun provideWiFiConfigManager(@ApplicationContext context: Context): WiFiConfigManager {
+        return WiFiConfigManager(context)
     }
 }

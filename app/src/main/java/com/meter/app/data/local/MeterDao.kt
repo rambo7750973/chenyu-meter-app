@@ -15,6 +15,9 @@ interface MeterDao {
     @Query("SELECT * FROM meters WHERE id = :meterId")
     fun getMeterById(meterId: String): Flow<Meter?>
 
+    @Query("SELECT * FROM meters WHERE macAddress = :macAddress LIMIT 1")
+    suspend fun getMeterByMac(macAddress: String): Meter?
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertMeter(meter: Meter)
 
