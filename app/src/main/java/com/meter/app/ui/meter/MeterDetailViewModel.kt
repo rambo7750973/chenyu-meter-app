@@ -45,12 +45,12 @@ class MeterDetailViewModel @Inject constructor(
                     if (reading != null) {
                         repository.recordMeterReading(
                             meterId = meterId,
-                            currentPower = reading.first,
-                            voltage = reading.second,
-                            current = reading.third,
-                            totalEnergy = reading.fourth,
-                            dailyEnergy = reading.fourth * 0.05f,
-                            monthlyEnergy = reading.fourth * 0.3f
+                            currentPower = reading.power,
+                            voltage = reading.voltage,
+                            current = reading.current,
+                            totalEnergy = reading.energy,
+                            dailyEnergy = reading.energy * 0.05f,
+                            monthlyEnergy = reading.energy * 0.3f
                         )
                         repository.updateMeterStatus(meterId, true)
                     }
